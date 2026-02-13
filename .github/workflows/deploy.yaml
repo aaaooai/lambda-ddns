@@ -1,0 +1,35 @@
+name: Deploy to AWS Lambda
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  id-token: write   # This is required for OIDC authentication
+  contents: read    # This is required to checkout the repository
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+        aws-region: ${{ vars.AWS_REGION }}
+        # The role-to-assume should be the ARN of the IAM role you created for GitHub Actions OIDC
+
+    - name: Deploy Lambda Function
+      uses: aws-actions/aws-lambda-deploy@v1.1.0
+      with:
+        function-name: ${{ vars.AWS_LAMBDA_FUNCTION_NAME }}
+        code-artifacts-dir: ./lambda
+        handler: ${{ vars.AWS_LAMBDA_HANDLER }}
+        runtime: ${{ vars.AWS_LAMBDA_RUNTIME }}
+        # Add any additional inputs this action supports
